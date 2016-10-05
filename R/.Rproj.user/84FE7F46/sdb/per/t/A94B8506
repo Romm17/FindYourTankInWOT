@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "require(data.table)\nrequire(logging)\nrequire(RSQLite)\n\ncon <- RSQLite::dbConnect(RSQLite::SQLite(), \"wot.sqlite\")\ntanks.xp <- as.data.table(RSQLite::dbReadTable(con, \"tanks_xp\"))\nRSQLite::dbDisconnect(con)\n\nX <- dcast(tanks.xp, account_id ~ tank_id, value.var = \"xp\", fun.aggregate = sum)\n\nlibrary(randomForest)\n\nin.train <- sample(1:nrow(X), 0.99 * nrow(X))\ntraining <- X[in.train, !c(\"account_id\"), with = F]\nnames(training) <- paste(\"tank\", names(training), sep = \"_\")\ntesting <- X[-in.train, !c(\"account_id\"), with = F]\nnames(testing) <- paste(\"tank\", names(testing), sep = \"_\")\n\nmodel <- randomForest(as.formula(\"tank_1 ~ .\"), data = training, ntree = 11)\nres <- data.frame(y = testing$tank_1, y_pred = predict(model, testing))\n",
+    "created" : 1473341653523.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2735405648",
+    "id" : "A94B8506",
+    "lastKnownWriteTime" : 1473434187,
+    "last_content_update" : 1473434187091,
+    "path" : "~/KPI/5semester/FindYourTankInWOT/R/model.R",
+    "project_path" : "model.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

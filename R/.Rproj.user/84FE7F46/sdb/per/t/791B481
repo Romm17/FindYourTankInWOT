@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "require(data.table)\nrequire(httr)\nrequire(jsonlite)\nrequire(logging)\nrequire(RSQLite)\n\napp.id <- \"a0b5d158684b7a16dc2d577a1aac3ae0\"\n\ngetStarting <- function(depth) {\n  if(depth > 1) {\n    to.paste <- getStarting(depth - 1)\n    unlist(lapply(letters, function(x) paste0(x, to.paste)))\n  } else {\n    letters\n  }\n}\n\nstartings <- getStarting(3)\nstartings <- startings[1:500]\n\ngetUsers <- function(startings, limit = 100) {\n  response <- GET(sprintf(\"https://api.worldoftanks.ru/wot/account/list/?application_id=%s&search=%s&limit=\", app.id, startings, limit))\n  parsed <- content(response, type=\"application/json\")$data\n  res <- data.table(matrix(unlist(parsed), nrow=length(parsed), byrow = T))\n  names(res) <- names(parsed[[1]])\n  class(res$account_id) <- \"integer\"\n  res\n}\n\ngetUsersBattles <- function(user) {\n  response <- GET(sprintf(\"https://api.worldoftanks.ru/wot/account/info/?application_id=%s&account_id=%s&fields=statistics.all.battles\", app.id, user))\n  Sys.sleep(0.1)\n  content(response, type=\"application/json\")$data[[toString(user)]]$statistics$all$battles\n}\n\ngetUsersWithBattles <- function(startings) {\n  users <- tryCatch({\n    users <- getUsers(startings)\n    users <- users[, .(nickname = nickname, battles = getUsersBattles(account_id)), by = account_id]\n    users <- users[battles >= 10000]\n    loginfo(paste0(\"Found \", nrow(users), \" users starting with '\", startings, \"'\"))\n    users\n  }, error = function(e) {\n    loginfo(paste0(\"Error on '\", startings, \"' : \", e))\n    data.table(account_id = integer(), battles = integer())\n  })\n  users\n}\n\ngetTankStat <- function(user) {\n  res <- tryCatch({\n    response <- GET(sprintf(\"https://api.worldoftanks.ru/wot/tanks/stats/?application_id=%s&account_id=%s&fields=tank_id,all.battle_avg_xp\", app.id, user))\n    parsed <- content(response, type=\"application/json\")$data[[toString(user)]]\n    res <- Reduce(\n      rbind,\n      lapply(parsed, function(l) {\n        data.table(tank_id = l$tank_id, xp = l$all$battle_avg_xp)\n      })\n    )\n    if (nrow(res) < 40) {\n      stop(\"User has less than 40 tanks.\")\n    } \n    loginfo(paste0(\"User \", user, \" played at \", nrow(res), \" tanks\"))\n    res\n  }, error = function(e) {\n    loginfo(paste0(\"Error on user \", user, \" : \", e))\n    data.table(tank_id = integer(), xp = integer())\n  })\n  Sys.sleep(0.1)\n  res\n}\n\nstartings.dt <- data.table(start = startings)\nusers <- startings.dt[, getUsersWithBattles(start), by = start]\nusersTanks <- users[, getTankStat(account_id), by = account_id]\n\ndbInit <- function(db.name = \"wot.sqlite\") {\n  con <- RSQLite::dbConnect(RSQLite::SQLite(), db.name)\n  RSQLite::dbGetQuery(\n    con,\n    \"create table users (\n    account_id integer primary key,\n    nickname varchar(24),\n    battles integer\n    )\"\n    )\n  RSQLite::dbGetQuery(\n    con,\n    \"create table tanks_xp (\n    account_id integer,\n    tank_id integer,\n    xp integer,\n    primary key(account_id, tank_id)\n    )\"\n  )\n  RSQLite::dbDisconnect(con)\n}\n\ndbInit()\ncon <- RSQLite::dbConnect(RSQLite::SQLite(), \"wot.sqlite\")\nRSQLite::dbWriteTable(con, \"users\", users[,.(account_id, nickname, battles)], append = T)\nRSQLite::dbWriteTable(con, \"tanks_xp\", usersTanks, append = T)\nRSQLite::dbDisconnect(con)",
+    "created" : 1473323615344.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3810458086",
+    "id" : "791B481",
+    "lastKnownWriteTime" : 1473344957,
+    "last_content_update" : 1473344957434,
+    "path" : "~/KPI/5semester/FindYourTankInWOT/R/dataLoader.R",
+    "project_path" : "dataLoader.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
