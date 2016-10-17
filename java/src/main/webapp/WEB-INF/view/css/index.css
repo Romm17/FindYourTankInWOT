@@ -1,0 +1,56 @@
+body {
+    background-size: cover;
+    background: url(../images/tank.jpg) no-repeat fixed;
+}
+
+.page-header {
+    text-align: center;
+    color: black;
+    border-bottom: none;
+}
+
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+   color: black;
+    font-weight: bold;
+}
+
+.table-hover tbody {
+    background-color: rgba(36, 60, 60, 0.4);
+    font-style: oblique;
+}
+
+.table-hover thead {
+    font-size: 26px;
+    color: azure;
+}
+
+.table {
+    color: white;
+}
+
+nav {
+    margin-top: 50px;
+}
+
+.nav-pills a{
+    color: whitesmoke;
+    background-color: rgba(36, 60, 60, 0.4);
+}
+
+.nav-pills li.active a{
+    background-color: rgba(51, 122, 183, 0.4);
+}
+
+.nav-pills a:hover{
+    color: black;
+}
+
+h3 {
+    text-align: center;
+    color: darkslategrey;
+}
+
+form {
+    text-align: center;
+    margin-top: 100px;
+}
