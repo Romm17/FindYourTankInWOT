@@ -2,3 +2,4 @@
 # IntelliJ
 /java/target/
 /java/*.iml
+.Rproj.user
